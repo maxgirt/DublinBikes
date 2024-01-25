@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block head%}
+
+{% endblock %}
+
+{% block body%}
+<style>
+</style>
+<style>
+</style>
+<div class="header">
+<h1><a href="./"><img id ="logo" src="static/bikelogo.png"></a></h1>
+<table>
+  <thead>
+    
+    <div id="location-info">
+      <div id="nearest-station-info"></div>
+    </div>
+    <tr>
+      <th>Temperature</th>
+      <th>Precipitation</th>
+      <th>Weather Condition</th>
+      <th>Wind Speed</th>
+    </tr>
+  </thead>
+  <tbody id="weather-data">
+    <tr>
+      <td id="temp"></td>
+      <td id="precipitation"></td>
+      <td id="weather-condition"></td>
+      <td id="wind-speed"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="container">
+  <div class="sidebar">
+    <form onsubmit="event.preventDefault(); findClosest(); return false;">
+      <p>Where are you right now?</p>
+      <input type="text" class="dropdownform" id="user_location" name="search">
+      <br>
+      <p>Where are you headed?</p>
+      <input type="text" class="dropdownform" id="destination" name="search">
+      <br>
+      <br>
+      <button type="submit" class="ctaButton">Submit</button>
+      <br>
+      <br>
+      <button type="submit" id="reset" class="resetButton">Reset</button>
+      <br>
+      <br>
+      <div id="realtimeinfobox"></div>
+    </form>
+    <br>
+    <script>
+      document.getElementById("reset").addEventListener("click", function() {
+        resetMap();
+      });
+  </script>
+  </form>
+  </div>
+  <div class="content">
+    <br>
+    <div class ="mapContainer"> 
+    <div id="map"></div>
+      <div id="button-container">
+        <button id="available_bikes" class="toggle-button active">Available Bikes</button>
+        <button id="bike_stands" class="toggle-button">Bike Stands</button>
+      </div>
+    </div>
+        <div class="chart-container" id="chart-container">
+          <canvas class="smallChart" id = "myChart2"></canvas>
+          <canvas class="smallChart" id = "myChart3"></canvas>
+    </div>
+    <br>
+    <h2 id="predictionh2">Looking to rent a bike in the future?</h2>
+    <div class="prediction-div">
+      <form onsubmit="event.preventDefault(); getPrediction(); return false;">
+          <div class="prediction-column">
+            <h3>Station:</h3>
+            <select id="Station" class="dropdownform-small" name="Station"></select>
+          </div>
+          <div class="prediction-column">
+            <h3>Day of week:</h3>
+            <select id="day" class="dropdownform-small" name="day">
+              <option value=0>Monday</option>
+              <option value=1>Tuesday</option>
+              <option value=2>Wednesday</option>
+              <option value=3>Thursday</option>
+              <option value=4>Friday</option>
+              <option value=5>Saturday</option>
+              <option value=6>Sunday</option>
+            </select>
+          </div>
+          <div class="prediction-column">
+            <h3>Time of day:</h3>
+            <select id="hour" class="dropdownform-small" name="hour">
+              <option value=0>12 am</option>
+              <option value=1>1 am</option>
+              <option value=2>2 am</option>
+              <option value=3>3 am</opon>
+              <option value=4>4 am</option>
+              <option value=5>5 am</option>
+              <option value=6>6 am</option>
+              <option value=7>7 am</option>
+              <option value=8>8 am</option>
+              <option value=9>9 am</option>
+              <option value=10>10 am</option>
+              <option value=11>11 am</option>
+              <option value=12>12 pm</option>
+              <option value=13>1 pm</option>
+              <option value=14>2 pm</option>
+              <option value=15>3 pm</option>
+              <option value=16>4 pm</option>
+              <option value=17>5 pm</option>
+              <option value=18>6 pm</option>
+              <option value=19>7 pm </option>
+              <option value=20>8 pm</option>
+              <option value=21>9 pm</option>
+              <option value=22>10 pm</option>
+              <option value=22>11 pm</option>
+            </select>
+          </div>
+          <div class="prediction-column">
+            <button type="submit" class="ctaButton">Check for future bike</button>
+          </div>
+        </form>
+      </div>
+      <h4 id="prediction"></h4>
+      <br>
+    <!-- Chart container -->
+    <div class="chart-container2">
+      <canvas id="myChart"></canvas>
+      <!-- Loading bar -->
+      <div id="loading-bar" style="display: none;">
+        <div class="loading-inner">
+          <div class="loading-bar-progress"></div>
+        </div>
+      </div>
+    </div>
+    </div>
+    <br>
+  </div>
+</div>
+<br>
+<div class="content">
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAR3nBWRVpuHE_6-qH9WW1SfdV3a7XWPZ4&callback=initMap&libraries=places,geometry">
+
+</script>
+
+<script>
+  function displayLatestWeatherRecord(weather) {
+   const weatherIconMap = {
+     "Clear": "wi wi-day-sunny",
+     "Partly cloudy": "wi wi-day-cloudy",
+     "Cloudy": "wi wi-cloudy",
+     "Overcast": "wi wi-day-sunny-overcast",
+     "Mist": "wi wi-fog",
+     "Patchy rain possible": "wi wi-day-rain-mix",
+     "Patchy snow possible": "wi wi-day-snow",
+     "Patchy sleet possible": "wi wi-day-sleet",
+     "Patchy freezing drizzle possible": "wi wi-day-sleet-storm",
+     "Thundery outbreaks possible": "wi wi-day-thunderstorm",
+     "Blowing snow": "wi wi-day-snow-wind",
+     "Blizzard": "wi wi-snow-wind",
+     "Fog": "wi wi-fog",
+     "Freezing fog": "wi wi-fog",
+     "Patchy light drizzle": "wi wi-day-sprinkle",
+     "Light drizzle": "wi wi-day-sprinkle",
+     "Freezing drizzle": "wi wi-day-sleet",
+     "Heavy freezing drizzle": "wi wi-day-sleet-storm",
+     "Patchy light rain": "wi wi-day-showers",
+     "Light rain": "wi wi-day-showers",
+     "Moderate rain at times": "wi wi-day-rain",
+     "Moderate rain": "wi wi-day-rain",
+     "Heavy rain at times": "wi wi-day-rain",
+     "Heavy rain": "wi wi-day-rain",
+     "Light freezing rain": "wi wi-day-sleet",
+     "Moderate or heavy freezing rain": "wi wi-day-sleet-storm",
+     "Light sleet": "wi wi-day-sleet",
+     "Moderate or heavy sleet": "wi wi-day-sleet-storm",
+     "Patchy light snow": "wi wi-day-snow",
+     "Light snow": "wi wi-day-snow",
+     "Patchy moderate snow": "wi wi-day-snow",
+     "Moderate snow": "wi wi-day-snow",
+     "Patchy heavy snow": "wi wi-day-snow",
+     "Heavy snow": "wi wi-day-snow",
+     "Ice pellets": "wi wi-day-sleet"
+   };
+ 
+   const weatherCondition = weather.weather_condition;
+   const iconClass = weatherIconMap[weatherCondition];
+   const iconElement = document.createElement('i');
+   iconElement.className = iconClass;
+   console.log(iconClass)
+   document.getElementById('weather-condition').textContent = weatherCondition;
+   document.getElementById('weather-condition').appendChild(iconElement);
+   
+   document.getElementById('temp').textContent = weather.temp + '°C';
+   document.getElementById('precipitation').textContent = weather.precipitation + ' mm';
+   document.getElementById('wind-speed').textContent = weather.windspeed + ' km/h';
+   }
+ </script>
+
+ 
+ 
+
+<script src="{{url_for('static', filename='index.js')}}"></script>
+
+
+{% endblock %}
